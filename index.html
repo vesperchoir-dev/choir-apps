@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Choir Login</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  body {
+    background: linear-gradient(145deg, #1e2b3c 0%, #0f1722 100%);
+    min-height: 100vh; display: flex; align-items: center;
+    justify-content: center; padding: 1rem;
+  }
+  .card {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-radius: 2rem; padding: 2rem 1.8rem;
+    width: 100%; max-width: 440px;
+    box-shadow: 0 25px 40px -10px rgba(0,0,0,0.6),
+                inset 0 1px 2px rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  h1 { font-size: 2rem; font-weight: 500; letter-spacing: -0.5px;
+       color: #f0f4fa; margin-bottom: 0.25rem;
+       display: flex; align-items: center; gap: 0.5rem; }
+  h1 i { font-size: 1.8rem; color: #a5c9ff; }
+  .subhead { color: #a0b3cc; font-size: 0.95rem; margin-bottom: 2rem;
+             border-left: 3px solid #3f6ea3; padding-left: 0.75rem; }
+  .input-group { margin-bottom: 1.4rem; }
+  label { display: block; color: #cbd9e9; font-size: 0.85rem;
+          font-weight: 500; letter-spacing: 0.3px; margin-bottom: 0.45rem;
+          text-transform: uppercase; opacity: 0.8; }
+  .input-field {
+    width: 100%; padding: 0.9rem 1.2rem;
+    background: rgba(10,20,30,0.6); border: 1px solid #2c4058;
+    border-radius: 1.2rem; font-size: 1rem; color: #eef5ff;
+    outline: none; transition: 0.2s ease;
+  }
+  .input-field:focus { border-color: #5b8ec9;
+    box-shadow: 0 0 0 3px rgba(91,142,201,0.25); background: #0b141e; }
+  .input-field::placeholder { color: #5a6e85; font-weight: 300; }
+  button {
+    width: 100%; padding: 0.9rem;
+    background: linear-gradient(135deg, #3f6ea3, #2b4b73);
+    border: none; border-radius: 2rem; color: white;
+    font-weight: 600; font-size: 1rem; letter-spacing: 0.3px;
+    cursor: pointer; display: flex; align-items: center;
+    justify-content: center; gap: 0.6rem; transition: 0.2s;
+    box-shadow: 0 10px 18px -8px #0a121c;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  button:hover { background: linear-gradient(135deg, #4a7fb5, #325882);
+                 transform: scale(1.01); }
+  button:active { transform: scale(0.99); }
+  button:disabled { opacity: 0.55; cursor: wait; }
+  .message {
+    margin-top: 1.5rem; padding: 0.9rem 1.2rem; border-radius: 1.2rem;
+    font-size: 0.95rem; font-weight: 500; text-align: center;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.05); color: #cdddec;
+  }
+  .message.success { background: #1d3a2b; border-color: #2c7a4b;
+                     color: #b7f0d0; }
+  .message.error   { background: #3a1d1d; border-color: #a13d3d;
+                     color: #fbc3c3; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1><i class="fas fa-music"></i> Choir Login</h1>
+  <div class="subhead">Enter first name &amp; gown number</div>
+
+  <div class="input-group">
+    <label for="loginName">First name</label>
+    <input type="text" id="loginName" class="input-field"
+           placeholder="e.g. Maria" autocomplete="off">
+  </div>
+
+  <div class="input-group">
+    <label for="loginGown">Gown number</label>
+    <input type="password" id="loginGown" class="input-field"
+           placeholder="e.g. 1024" autocomplete="off">
+  </div>
+
+  <button id="loginBtn"><i class="fas fa-sign-in-alt"></i> Sign in</button>
+
+  <div id="loginMessage" class="message">Loading choir list…</div>
+</div>
+
+<script>
+(function () {
+  const loginName    = document.getElementById('loginName');
+  const loginGown    = document.getElementById('loginGown');
+  const loginBtn     = document.getElementById('loginBtn');
+  const loginMessage = document.getElementById('loginMessage');
+
+  let choir = [];          // loaded from choir.json
+  let ready = false;       // becomes true once data loads
+
+  // ----- Load choir.json -----
+  fetch('choir.json', { cache: 'no-store' })
+    .then(res => {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(data => {
+      if (!Array.isArray(data)) throw new Error('choir.json must be an array');
+      // keep only valid entries
+      choir = data
+        .filter(m => m && typeof m.name === 'string' && typeof m.gown === 'string')
+        .map(m => ({
+          name: m.name.trim(),
+          gown: String(m.gown).trim()
+        }));
+      ready = true;
+      loginMessage.textContent = 'Ready — enter your details.';
+      loginMessage.className = 'message';
+      loginBtn.disabled = false;
+    })
+    .catch(err => {
+      console.error('Failed to load choir.json:', err);
+      loginMessage.textContent = '⚠ Could not load choir.json. Check that the file exists next to index.html.';
+      loginMessage.className = 'message error';
+      loginBtn.disabled = true;
+    });
+
+  // Start disabled until data is ready
+  loginBtn.disabled = true;
+
+  // ----- Login check -----
+  function performLogin() {
+    if (!ready) return;
+
+    const enteredName = loginName.value.trim();
+    const enteredGown = loginGown.value.trim();
+
+    if (!enteredName || !enteredGown) {
+      loginMessage.textContent = 'Please fill in both fields.';
+      loginMessage.className = 'message error';
+      return;
+    }
+
+    // Enforce first-name-only comparison
+    const firstName = enteredName.split(/\s+/)[0].toLowerCase();
+
+    const match = choir.find(m =>
+      m.name.split(/\s+/)[0].toLowerCase() === firstName &&
+      m.gown === enteredGown
+    );
+
+    if (match) {
+      loginMessage.textContent = '✅ Welcome, ' + match.name + '! (Gown #' + match.gown + ')';
+      loginMessage.className = 'message success';
+      loginName.value = '';
+      loginGown.value = '';
+    } else {
+      loginMessage.textContent = '❌ Invalid name or gown number.';
+      loginMessage.className = 'message error';
+    }
+  }
+
+  loginBtn.addEventListener('click', performLogin);
+  loginName.addEventListener('keypress', e => { if (e.key === 'Enter') performLogin(); });
+  loginGown.addEventListener('keypress', e => { if (e.key === 'Enter') performLogin(); });
+})();
+</script>
+</body>
+</html>
