@@ -169,6 +169,64 @@
             width: 70px;
             flex-shrink: 0;
         }
+
+        /* Hex color field with preview + optional picker */
+        .hex-color-field {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+        .hex-color-field input[type="text"] {
+            flex: 1;
+            min-width: 0;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 0.02em;
+            text-transform: lowercase;
+            padding: 8px 12px;
+        }
+        .hex-color-field .color-preview {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            flex-shrink: 0;
+            cursor: pointer;
+            position: relative;
+            transition: 0.15s;
+            background: #7851A9;
+            overflow: hidden;
+        }
+        .hex-color-field .color-preview:hover {
+            border-color: #7851A9;
+            transform: scale(1.05);
+        }
+        .hex-color-field .color-preview input[type="color"] {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            border: none;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .hex-color-field.invalid input[type="text"] {
+            border-color: #a94442;
+            background: #2a1a1a;
+        }
+        .hex-color-field .hex-hint {
+            font-size: 0.6rem;
+            color: #666;
+            white-space: nowrap;
+            display: none;
+        }
+        .hex-color-field.invalid .hex-hint {
+            display: inline;
+            color: #e88;
+        }
+
         .playlist-editor-list {
             display: flex;
             flex-direction: column;
@@ -208,10 +266,9 @@
             padding: 8px 12px;
             font-size: 0.8rem;
         }
-        .playlist-editor-item input[type="color"] {
-            height: 36px;
-            width: 60px;
-            padding: 3px;
+        .playlist-editor-item .pl-field.color-field-wrapper {
+            flex: 0 0 160px;
+            min-width: 160px;
         }
         .icon-btn {
             background: transparent;
@@ -316,6 +373,7 @@
             .editor-header, .editor-main { padding: 16px; }
             .playlist-editor-item { flex-direction: column; align-items: stretch; }
             .playlist-editor-item .pl-field { min-width: 100%; }
+            .playlist-editor-item .pl-field.color-field-wrapper { flex: 1; min-width: 100%; }
         }
     </style>
 </head>
@@ -323,7 +381,7 @@
     <div class="editor-container">
         <div class="editor-header">
             <h1>
-                🎛️ Playlist Editor
+                Archive Playlist Editor
                 <span id="statusBadge">playlists.json</span>
             </h1>
             <div class="button-group">
@@ -363,6 +421,23 @@
         }
 
         // ============================================================
+        // HEX COLOR VALIDATION
+        // ============================================================
+        function isValidHex(value) {
+            return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(String(value).trim());
+        }
+
+        function normalizeHex(value) {
+            let v = String(value).trim().toLowerCase();
+            if (!v.startsWith('#')) v = '#' + v;
+            if (/^#[0-9a-f]{3}$/.test(v)) {
+                // Expand #abc → #aabbcc
+                v = '#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3];
+            }
+            return v;
+        }
+
+        // ============================================================
         // SAVE / LOAD LOGIC
         // ============================================================
         async function saveToFile() {
@@ -377,7 +452,6 @@
                 showToast('✅ Saved to playlists.json');
                 updateJsonPreview();
             } catch (err) {
-                // Fallback: try POST, then download
                 try {
                     const jsonString = JSON.stringify(albumsData, null, 2);
                     const response = await fetch('playlists.json', {
@@ -535,7 +609,7 @@
                 });
             });
 
-            // Playlist fields
+            // Playlist text fields
             editorMain.querySelectorAll('input[data-pl-field]').forEach(input => {
                 input.addEventListener('input', (e) => {
                     const albumIdx = parseInt(e.target.dataset.album);
@@ -543,11 +617,74 @@
                     const field = e.target.dataset.plField;
                     if (isNaN(albumIdx) || isNaN(plIdx)) return;
                     if (!albumsData[albumIdx]?.playlists?.[plIdx]) return;
-                    albumsData[albumIdx].playlists[plIdx][field] = e.target.value;
-                    // Update album accent if color changed
+
+                    let value = e.target.value;
+
                     if (field === 'color') {
+                        // Validate hex
+                        const wrapper = e.target.closest('.hex-color-field');
+                        if (!isValidHex(value)) {
+                            wrapper?.classList.add('invalid');
+                            // Don't write invalid color to data
+                            return;
+                        }
+                        wrapper?.classList.remove('invalid');
+                        value = normalizeHex(value);
+                        // Update the preview swatch
+                        const preview = wrapper?.querySelector('.color-preview');
+                        if (preview) preview.style.background = value;
+                        // Update album accent
                         const card = editorMain.querySelector(`.album-editor-card[data-album-index="${albumIdx}"]`);
-                        if (card) card.style.setProperty('--accent', e.target.value);
+                        if (card && plIdx === 0) card.style.setProperty('--accent', value);
+                    }
+
+                    albumsData[albumIdx].playlists[plIdx][field] = value;
+                    updateJsonPreview();
+                });
+
+                // Normalize hex on blur
+                if (input.dataset.plField === 'color') {
+                    input.addEventListener('blur', (e) => {
+                        const albumIdx = parseInt(e.target.dataset.album);
+                        const plIdx = parseInt(e.target.dataset.plIndex);
+                        if (isNaN(albumIdx) || isNaN(plIdx)) return;
+                        if (!albumsData[albumIdx]?.playlists?.[plIdx]) return;
+                        const wrapper = e.target.closest('.hex-color-field');
+                        if (isValidHex(e.target.value)) {
+                            const normalized = normalizeHex(e.target.value);
+                            e.target.value = normalized;
+                            albumsData[albumIdx].playlists[plIdx].color = normalized;
+                            const preview = wrapper?.querySelector('.color-preview');
+                            if (preview) preview.style.background = normalized;
+                            wrapper?.classList.remove('invalid');
+                            updateJsonPreview();
+                        }
+                    });
+                }
+            });
+
+            // Color picker swatch (opens native picker)
+            editorMain.querySelectorAll('.color-preview input[type="color"]').forEach(picker => {
+                picker.addEventListener('input', (e) => {
+                    const wrapper = e.target.closest('.hex-color-field');
+                    if (!wrapper) return;
+                    const textInput = wrapper.querySelector('input[type="text"]');
+                    const albumIdx = parseInt(textInput.dataset.album);
+                    const plIdx = parseInt(textInput.dataset.plIndex);
+                    if (isNaN(albumIdx) || isNaN(plIdx)) return;
+                    if (!albumsData[albumIdx]?.playlists?.[plIdx]) return;
+
+                    const value = e.target.value.toLowerCase();
+                    textInput.value = value;
+                    albumsData[albumIdx].playlists[plIdx].color = value;
+                    wrapper.style.setProperty('--preview', value);
+                    const preview = wrapper.querySelector('.color-preview');
+                    if (preview) preview.style.background = value;
+                    wrapper.classList.remove('invalid');
+
+                    if (plIdx === 0) {
+                        const card = editorMain.querySelector(`.album-editor-card[data-album-index="${albumIdx}"]`);
+                        if (card) card.style.setProperty('--accent', value);
                     }
                     updateJsonPreview();
                 });
@@ -575,7 +712,9 @@
             if (!playlists || playlists.length === 0) {
                 return `<div style="padding:8px 0;color:#555;font-size:0.75rem;font-style:italic;">No playlists — click "Add Playlist" below</div>`;
             }
-            return playlists.map((pl, plIdx) => `
+            return playlists.map((pl, plIdx) => {
+                const color = pl.color || '#7851A9';
+                return `
                 <div class="playlist-editor-item" data-pl-index="${plIdx}">
                     <div class="pl-field" style="flex:2;">
                         <label>Playlist ID</label>
@@ -589,13 +728,20 @@
                         <label>URL</label>
                         <input type="text" value="${escapeHtml(pl.url || '')}" data-pl-field="url" data-album="${albumIdx}" data-pl-index="${plIdx}" placeholder="https://youtube.com/playlist?list=...">
                     </div>
-                    <div class="pl-field" style="flex:0 0 70px;">
-                        <label>Color</label>
-                        <input type="color" value="${pl.color || '#7851A9'}" data-pl-field="color" data-album="${albumIdx}" data-pl-index="${plIdx}">
+                    <div class="pl-field color-field-wrapper">
+                        <label>Color (hex)</label>
+                        <div class="hex-color-field">
+                            <input type="text" value="${escapeHtml(color)}" data-pl-field="color" data-album="${albumIdx}" data-pl-index="${plIdx}" placeholder="#7851A9" maxlength="7" spellcheck="false" autocomplete="off">
+                            <div class="color-preview" style="background:${escapeHtml(color)};" title="Pick color">
+                                <input type="color" value="${escapeHtml(color.length === 7 ? color : '#7851A9')}" tabindex="-1">
+                            </div>
+                            <span class="hex-hint">invalid</span>
+                        </div>
                     </div>
                     <button class="icon-btn danger" data-action="delete-playlist" data-album="${albumIdx}" data-pl-index="${plIdx}" title="Delete playlist" style="align-self:flex-end; margin-bottom:2px;">✕</button>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function addAlbum() {
@@ -607,7 +753,6 @@
             });
             renderEditor();
             updateJsonPreview();
-            // Scroll to bottom
             editorMain.scrollTo({ top: editorMain.scrollHeight, behavior: 'smooth' });
         }
 
