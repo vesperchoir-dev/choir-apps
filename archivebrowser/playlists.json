@@ -1,0 +1,53 @@
+[
+  {
+    "id": "sunday-anthems",
+    "name": "Anthems",
+    "icon": "🎵",
+    "playlists": [
+      { "id": "PLVSGqStbxdjY", "title": "", "url": "https://www.youtube.com/playlist?list=PLVSGqStbxdjY", "color": "#964880" },
+      { "id": "PLdU-dEerFD4E", "title": "", "url": "https://www.youtube.com/playlist?list=PLdU-dEerFD4E", "color": "#988f7d" },
+      { "id": "PLAJySOhvdg-4", "title": "", "url": "https://www.youtube.com/playlist?list=PLAJySOhvdg-4", "color": "#1d9371" }
+    ]
+  },
+  {
+    "id": "music-sunday",
+    "name": "Music Sunday",
+    "icon": "🎶",
+    "playlists": [
+      { "id": "PLcQUCzVEKk7Q", "title": "", "url": "https://www.youtube.com/playlist?list=PLcQUCzVEKk7Q", "color": "#d47d61" },
+      { "id": "PLeIlAcbyryv8", "title": "", "url": "https://www.youtube.com/playlist?list=PLeIlAcbyryv8", "color": "#ccc2b2" },
+      { "id": "PLcTmUyM_bY68", "title": "", "url": "https://www.youtube.com/playlist?list=PLcTmUyM_bY68", "color": "#2c2758" },
+      { "id": "PLQp7eJITwPes", "title": "", "url": "https://www.youtube.com/playlist?list=PLQp7eJITwPes", "color": "#35466c" }
+    ]
+  },
+  {
+    "id": "christmas-cantata",
+    "name": "Christmas Cantata",
+    "icon": "🎄",
+    "playlists": [
+      { "id": "PLBsFNw2pfrRs", "title": "", "url": "https://www.youtube.com/playlist?list=PLBsFNw2pfrRs", "color": "#572e47" },
+      { "id": "PLL3D8lMxYkIg", "title": "", "url": "https://www.youtube.com/playlist?list=PLL3D8lMxYkIg", "color": "#534363" },
+      { "id": "PLOW4NlviG7ZM", "title": "", "url": "https://www.youtube.com/playlist?list=PLOW4NlviG7ZM", "color": "#332c6a" }
+    ]
+  },
+  {
+    "id": "music-in-mission",
+    "name": "Music In Mission",
+    "icon": "🌍",
+    "playlists": [
+      { "id": "PLD0Y-R2U-MJA", "title": "", "url": "https://www.youtube.com/playlist?list=PLD0Y-R2U-MJA", "color": "#265597" }
+    ]
+  },
+  {
+    "id": "misc",
+    "name": "Miscellaneous",
+    "icon": "🎬",
+    "playlists": [
+      { "id": "PLRxodLtt1Whg", "title": "", "url": "https://www.youtube.com/playlist?list=PLRxodLtt1Whg", "color": "#e38790" },
+      { "id": "PLGeSNhYJyDWw", "title": "", "url": "https://www.youtube.com/playlist?list=PLGeSNhYJyDWw", "color": "#464646" },
+      { "id": "PLSunFEyY5n_I", "title": "", "url": "https://www.youtube.com/playlist?list=PLSunFEyY5n_I", "color": "#6c9f90" },
+      { "id": "PLGgmMlNpdMPw", "title": "", "url": "https://www.youtube.com/playlist?list=PLGgmMlNpdMPw", "color": "#77bee5" },
+      { "id": "PLUsZB968MiYI", "title": "", "url": "https://www.youtube.com/playlist?list=PLUsZB968MiYI", "color": "#806258" }
+    ]
+  }
+]
