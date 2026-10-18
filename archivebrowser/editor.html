@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playlist Editor · YouTube Archive</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .editor-container {
+            max-width: 1400px;
+            width: 100%;
+            background: #111111;
+            border: 1px solid #2a2a2a;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .editor-header {
+            padding: 24px 28px;
+            background: #0d0d0d;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .editor-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .editor-header h1 span {
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: #888;
+            background: #1f1f1f;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #333;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid #333;
+            background: #1f1f1f;
+            color: #ccc;
+            font-family: 'Inter', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            -webkit-appearance: none;
+        }
+        .btn:hover {
+            background: #2a2a2a;
+            border-color: #7851A9;
+            color: #fff;
+        }
+        .btn-primary {
+            background: #7851A9;
+            border-color: #7851A9;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #8e6bbf;
+            border-color: #8e6bbf;
+        }
+        .btn-danger {
+            border-color: #a94442;
+            color: #e88;
+        }
+        .btn-danger:hover {
+            background: #2a1a1a;
+            border-color: #e88;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+        }
+        .editor-main {
+            padding: 24px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: #0a0a0a;
+        }
+        .album-editor-card {
+            background: #111111;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: 0.2s;
+            border-left: 4px solid var(--accent, #7851A9);
+        }
+        .album-editor-header {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .album-editor-header .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            min-width: 160px;
+        }
+        .album-editor-header .field label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #888;
+        }
+        input[type="text"], input[type="color"] {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #eee;
+            font-size: 0.85rem;
+            font-family: 'Inter', sans-serif;
+            transition: 0.2s;
+            width: 100%;
+            -webkit-appearance: none;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #7851A9;
+            background: #222;
+            color: #fff;
+        }
+        input[type="color"] {
+            padding: 4px;
+            height: 42px;
+            cursor: pointer;
+            width: 70px;
+            flex-shrink: 0;
+        }
+        .playlist-editor-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-left: 20px;
+            border-left: 2px solid #2a2a2a;
+            margin-left: 10px;
+        }
+        .playlist-editor-item {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: #0d0d0d;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 10px 14px;
+            flex-wrap: wrap;
+            transition: 0.15s;
+        }
+        .playlist-editor-item:hover {
+            border-color: #3a3a3a;
+        }
+        .playlist-editor-item .pl-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 120px;
+        }
+        .playlist-editor-item .pl-field label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #777;
+        }
+        .playlist-editor-item input[type="text"] {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+        .playlist-editor-item input[type="color"] {
+            height: 36px;
+            width: 60px;
+            padding: 3px;
+        }
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 6px;
+            border-radius: 6px;
+            transition: 0.15s;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .icon-btn:hover {
+            background: #2a2a2a;
+            color: #fff;
+        }
+        .icon-btn.danger:hover {
+            background: #2a1a1a;
+            color: #e88;
+        }
+        .album-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .empty-state-editor {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+        .add-album-bar {
+            display: flex;
+            justify-content: center;
+            padding-top: 8px;
+        }
+        .json-preview {
+            background: #0d0d0d;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+        .json-preview h3 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #888;
+            margin-bottom: 12px;
+        }
+        .json-preview pre {
+            background: #0a0a0a;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #222;
+            color: #aaa;
+            font-size: 0.75rem;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #1f1f1f;
+            border: 1px solid #7851A9;
+            color: #fff;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: 0.3s;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast.error {
+            border-color: #a94442;
+        }
+        .badge-small {
+            font-size: 0.65rem;
+            background: #252525;
+            border: 1px solid #333;
+            padding: 2px 10px;
+            border-radius: 20px;
+            color: #aaa;
+        }
+        @media (max-width: 700px) {
+            body { padding: 10px; }
+            .editor-header, .editor-main { padding: 16px; }
+            .playlist-editor-item { flex-direction: column; align-items: stretch; }
+            .playlist-editor-item .pl-field { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <div class="editor-header">
+            <h1>
+                🎛️ Playlist Editor
+                <span id="statusBadge">playlists.json</span>
+            </h1>
+            <div class="button-group">
+                <button class="btn" id="loadBtn" title="Reload from file">↻ Reload</button>
+                <button class="btn btn-primary" id="saveBtn" title="Save to playlists.json">💾 Save JSON</button>
+                <button class="btn" id="downloadBtn" title="Download JSON">⬇ Download</button>
+                <button class="btn" id="copyJsonBtn" title="Copy JSON">📋 Copy</button>
+            </div>
+        </div>
+        <div class="editor-main" id="editorMain">
+            <!-- dynamically populated -->
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============================================================
+        // STATE
+        // ============================================================
+        let albumsData = [];
+
+        const editorMain = document.getElementById('editorMain');
+        const statusBadge = document.getElementById('statusBadge');
+        const toast = document.getElementById('toast');
+
+        // ============================================================
+        // TOAST NOTIFICATIONS
+        // ============================================================
+        let toastTimeout;
+        function showToast(message, isError = false) {
+            clearTimeout(toastTimeout);
+            toast.textContent = message;
+            toast.className = 'toast show' + (isError ? ' error' : '');
+            toastTimeout = setTimeout(() => {
+                toast.className = 'toast';
+            }, 2500);
+        }
+
+        // ============================================================
+        // SAVE / LOAD LOGIC
+        // ============================================================
+        async function saveToFile() {
+            try {
+                const jsonString = JSON.stringify(albumsData, null, 2);
+                const response = await fetch('playlists.json', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: jsonString
+                });
+                if (!response.ok) throw new Error('Server returned ' + response.status);
+                showToast('✅ Saved to playlists.json');
+                updateJsonPreview();
+            } catch (err) {
+                // Fallback: try POST, then download
+                try {
+                    const jsonString = JSON.stringify(albumsData, null, 2);
+                    const response = await fetch('playlists.json', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: jsonString
+                    });
+                    if (!response.ok) throw new Error('Server returned ' + response.status);
+                    showToast('✅ Saved to playlists.json');
+                    updateJsonPreview();
+                } catch (err2) {
+                    showToast('⚠️ Could not save automatically — use Download / Copy', true);
+                }
+            }
+        }
+
+        async function loadFromFile() {
+            try {
+                const response = await fetch('playlists.json?t=' + Date.now());
+                if (!response.ok) throw new Error('File not found');
+                const data = await response.json();
+                if (!Array.isArray(data)) throw new Error('Invalid format');
+                albumsData = data;
+                renderEditor();
+                showToast('📂 Loaded playlists.json');
+            } catch (err) {
+                showToast('⚠️ Could not load playlists.json — starting empty', true);
+                albumsData = [];
+                renderEditor();
+            }
+            updateJsonPreview();
+        }
+
+        function downloadJson() {
+            const jsonString = JSON.stringify(albumsData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'playlists.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('⬇ Downloaded playlists.json');
+        }
+
+        function copyJson() {
+            const jsonString = JSON.stringify(albumsData, null, 2);
+            navigator.clipboard?.writeText(jsonString).then(() => {
+                showToast('📋 JSON copied to clipboard');
+            }).catch(() => {
+                showToast('⚠️ Clipboard unavailable', true);
+            });
+        }
+
+        // ============================================================
+        // RENDER EDITOR
+        // ============================================================
+        function renderEditor() {
+            if (albumsData.length === 0) {
+                editorMain.innerHTML = `
+                    <div class="empty-state-editor">
+                        No albums yet. Click "Add Album" below to create one.
+                    </div>
+                    <div class="add-album-bar">
+                        <button class="btn btn-primary" id="addAlbumBtn">+ Add Album</button>
+                    </div>
+                    <div class="json-preview" id="jsonPreview"></div>
+                `;
+                document.getElementById('addAlbumBtn').addEventListener('click', addAlbum);
+                updateJsonPreview();
+                return;
+            }
+
+            let html = '';
+            albumsData.forEach((album, albumIndex) => {
+                const accent = album.playlists?.[0]?.color || '#7851A9';
+                html += `
+                    <div class="album-editor-card" data-album-index="${albumIndex}" style="--accent: ${accent};">
+                        <div class="album-editor-header">
+                            <div class="field" style="flex:2;">
+                                <label>Album Name</label>
+                                <input type="text" value="${escapeHtml(album.name)}" data-field="name" data-album="${albumIndex}" placeholder="Album name">
+                            </div>
+                            <div class="field" style="flex:1;">
+                                <label>Icon</label>
+                                <input type="text" value="${escapeHtml(album.icon || '')}" data-field="icon" data-album="${albumIndex}" placeholder="🎵" maxlength="4">
+                            </div>
+                            <div class="field" style="flex:1;">
+                                <label>ID (optional)</label>
+                                <input type="text" value="${escapeHtml(album.id || '')}" data-field="id" data-album="${albumIndex}" placeholder="auto">
+                            </div>
+                            <button class="icon-btn danger" data-action="delete-album" data-album="${albumIndex}" title="Delete album" style="font-size:1.2rem; align-self:flex-end;">🗑️</button>
+                        </div>
+                        <div class="playlist-editor-list" id="playlistList-${albumIndex}">
+                            ${renderPlaylists(album.playlists || [], albumIndex)}
+                        </div>
+                        <div class="album-actions">
+                            <button class="btn btn-sm" data-action="add-playlist" data-album="${albumIndex}">+ Add Playlist</button>
+                            <span class="badge-small">${(album.playlists || []).length} playlist${(album.playlists || []).length !== 1 ? 's' : ''}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                <div class="add-album-bar">
+                    <button class="btn btn-primary" id="addAlbumBtn">+ Add Album</button>
+                </div>
+                <div class="json-preview" id="jsonPreview"></div>
+            `;
+
+            editorMain.innerHTML = html;
+
+            // Attach event listeners
+            document.getElementById('addAlbumBtn').addEventListener('click', addAlbum);
+
+            // Album fields
+            editorMain.querySelectorAll('input[data-field]').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const albumIdx = parseInt(e.target.dataset.album);
+                    const field = e.target.dataset.field;
+                    if (isNaN(albumIdx) || !albumsData[albumIdx]) return;
+                    albumsData[albumIdx][field] = e.target.value;
+                    updateJsonPreview();
+                });
+            });
+
+            // Delete album
+            editorMain.querySelectorAll('[data-action="delete-album"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const albumIdx = parseInt(e.target.dataset.album);
+                    if (isNaN(albumIdx)) return;
+                    if (confirm(`Delete album "${albumsData[albumIdx].name}"?`)) {
+                        albumsData.splice(albumIdx, 1);
+                        renderEditor();
+                        updateJsonPreview();
+                    }
+                });
+            });
+
+            // Add playlist
+            editorMain.querySelectorAll('[data-action="add-playlist"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const albumIdx = parseInt(e.target.dataset.album);
+                    if (isNaN(albumIdx) || !albumsData[albumIdx]) return;
+                    if (!albumsData[albumIdx].playlists) albumsData[albumIdx].playlists = [];
+                    albumsData[albumIdx].playlists.push({
+                        id: '',
+                        title: '',
+                        url: '',
+                        color: randomColor()
+                    });
+                    renderEditor();
+                    updateJsonPreview();
+                });
+            });
+
+            // Playlist fields
+            editorMain.querySelectorAll('input[data-pl-field]').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const albumIdx = parseInt(e.target.dataset.album);
+                    const plIdx = parseInt(e.target.dataset.plIndex);
+                    const field = e.target.dataset.plField;
+                    if (isNaN(albumIdx) || isNaN(plIdx)) return;
+                    if (!albumsData[albumIdx]?.playlists?.[plIdx]) return;
+                    albumsData[albumIdx].playlists[plIdx][field] = e.target.value;
+                    // Update album accent if color changed
+                    if (field === 'color') {
+                        const card = editorMain.querySelector(`.album-editor-card[data-album-index="${albumIdx}"]`);
+                        if (card) card.style.setProperty('--accent', e.target.value);
+                    }
+                    updateJsonPreview();
+                });
+            });
+
+            // Delete playlist
+            editorMain.querySelectorAll('[data-action="delete-playlist"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const albumIdx = parseInt(e.target.dataset.album);
+                    const plIdx = parseInt(e.target.dataset.plIndex);
+                    if (isNaN(albumIdx) || isNaN(plIdx)) return;
+                    if (!albumsData[albumIdx]?.playlists) return;
+                    if (confirm('Delete this playlist?')) {
+                        albumsData[albumIdx].playlists.splice(plIdx, 1);
+                        renderEditor();
+                        updateJsonPreview();
+                    }
+                });
+            });
+
+            updateJsonPreview();
+        }
+
+        function renderPlaylists(playlists, albumIdx) {
+            if (!playlists || playlists.length === 0) {
+                return `<div style="padding:8px 0;color:#555;font-size:0.75rem;font-style:italic;">No playlists — click "Add Playlist" below</div>`;
+            }
+            return playlists.map((pl, plIdx) => `
+                <div class="playlist-editor-item" data-pl-index="${plIdx}">
+                    <div class="pl-field" style="flex:2;">
+                        <label>Playlist ID</label>
+                        <input type="text" value="${escapeHtml(pl.id || '')}" data-pl-field="id" data-album="${albumIdx}" data-pl-index="${plIdx}" placeholder="PL...">
+                    </div>
+                    <div class="pl-field" style="flex:2;">
+                        <label>Title</label>
+                        <input type="text" value="${escapeHtml(pl.title || '')}" data-pl-field="title" data-album="${albumIdx}" data-pl-index="${plIdx}" placeholder="Playlist title">
+                    </div>
+                    <div class="pl-field" style="flex:2;">
+                        <label>URL</label>
+                        <input type="text" value="${escapeHtml(pl.url || '')}" data-pl-field="url" data-album="${albumIdx}" data-pl-index="${plIdx}" placeholder="https://youtube.com/playlist?list=...">
+                    </div>
+                    <div class="pl-field" style="flex:0 0 70px;">
+                        <label>Color</label>
+                        <input type="color" value="${pl.color || '#7851A9'}" data-pl-field="color" data-album="${albumIdx}" data-pl-index="${plIdx}">
+                    </div>
+                    <button class="icon-btn danger" data-action="delete-playlist" data-album="${albumIdx}" data-pl-index="${plIdx}" title="Delete playlist" style="align-self:flex-end; margin-bottom:2px;">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function addAlbum() {
+            albumsData.push({
+                id: '',
+                name: 'New Album',
+                icon: '🎵',
+                playlists: []
+            });
+            renderEditor();
+            updateJsonPreview();
+            // Scroll to bottom
+            editorMain.scrollTo({ top: editorMain.scrollHeight, behavior: 'smooth' });
+        }
+
+        // ============================================================
+        // JSON PREVIEW
+        // ============================================================
+        function updateJsonPreview() {
+            const preview = document.getElementById('jsonPreview');
+            if (!preview) return;
+            const jsonString = JSON.stringify(albumsData, null, 2);
+            preview.innerHTML = `
+                <h3>📄 JSON Preview</h3>
+                <pre>${escapeHtml(jsonString)}</pre>
+            `;
+        }
+
+        // ============================================================
+        // HELPERS
+        // ============================================================
+        function escapeHtml(str) {
+            if (str === undefined || str === null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function randomColor() {
+            const colors = ['#7851A9', '#964880', '#988f7d', '#1d9371', '#d47d61', '#ccc2b2', '#2c2758', '#35466c', '#572e47', '#534363', '#332c6a', '#265597', '#e38790', '#464646', '#6c9f90', '#77bee5', '#806258'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // ============================================================
+        // BUTTON HANDLERS
+        // ============================================================
+        document.getElementById('loadBtn').addEventListener('click', loadFromFile);
+        document.getElementById('saveBtn').addEventListener('click', saveToFile);
+        document.getElementById('downloadBtn').addEventListener('click', downloadJson);
+        document.getElementById('copyJsonBtn').addEventListener('click', copyJson);
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        (async function init() {
+            await loadFromFile();
+        })();
+    </script>
+</body>
+</html>
